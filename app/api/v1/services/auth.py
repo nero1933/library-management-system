@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from api.v1.models import User
 from config import SECRET_KEY, ALGORITHM, MAX_BORROWS
-
+from db import db_dependency, get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')
@@ -14,6 +14,10 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')
 
 def get_user_by_email(db: Session, email: str) -> User | None:
     return db.query(User).filter(User.email == email).first()
+
+
+def get_user_by_id(db: Session, user_id: int) -> User | None:
+    return db.query(User).filter(User.id == user_id).first()
 
 
 def create_user(db: Session,
@@ -39,22 +43,34 @@ def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
 def create_auth_token(user_id: int, token_lifetime: int):
-    print(datetime.utcnow() + timedelta(minutes=token_lifetime))
     expire = datetime.utcnow() + timedelta(minutes=token_lifetime)
-    to_encode = {'sub': user_id, 'exp': expire}
-    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    to_encode = {
+        'sub': str(user_id),
+        'exp': int(expire.timestamp())
+    }
+
+    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    return token
 
 
-def get_user_from_token(token: str = Depends(oauth2_scheme)):
+def get_user_from_token(
+        token: str = Depends(oauth2_scheme),
+        db: Session = Depends(get_db),
+):
     try:
         # Decode the token and verify it
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: str = payload.get("sub")  # "sub" is typically used for the user ID in JWT
+        user_id = payload.get("sub")  # "sub" is used for the user ID
         if user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is invalid")
 
+        try:
+            user_id = int(user_id)
+        except ValueError:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid user ID in token")
+
         # Get the user from the database
-        user = get_user_by_id(user_id)  # Assuming you have a function to retrieve a user by ID
+        user = get_user_by_id(db, int(user_id))  # Assuming you have a function to retrieve a user by ID
         if user is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
@@ -65,9 +81,3 @@ def get_user_from_token(token: str = Depends(oauth2_scheme)):
 
     except jwt.PyJWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-
-
-# Dummy function to simulate user retrieval
-def get_user_by_id(user_id: str):
-    # Implement this to query the database for the user by ID
-    return User(id=user_id, username="test_user", email="test@example.com")

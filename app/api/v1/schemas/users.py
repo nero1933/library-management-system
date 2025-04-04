@@ -9,7 +9,7 @@ class UserCreateSchema(BaseModel):
     password: str
     full_name: str
 
-class UserOutSchema(BaseModel):
+class UserResponseSchema(BaseModel):
     id: int
     username: str
     email: EmailStr
