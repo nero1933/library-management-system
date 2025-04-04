@@ -1,15 +1,31 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from typing import List
-from datetime import datetime
+from datetime import date
 
 
-class AuthorBase(BaseModel):
+class AuthorSchema(BaseModel):
     name: str
+    birthdate: date
+
+    @validator('birthdate')
+    def validator_birthdate(cls, value):
+        if value > date.today():
+            raise ValueError("Birthdate cannot be in the future")
+
+        return value
+
+class AuthorResponseSchema(BaseModel):
+    id: int
+    name: str
+    birthdate: date
+
+    class Config:
+        from_attributes = True  # Allows returning ORM objects
 
 
-class BookBase(BaseModel):
+class BookSchema(BaseModel):
     title: str
-    author: List[AuthorBase]
+    author: List[AuthorSchema]
     isbn: str
-    publish_date: datetime
+    publish_date: date
 

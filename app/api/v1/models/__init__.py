@@ -1,2 +1,1 @@
-from .books import *
-from .users import *
+from .models import *

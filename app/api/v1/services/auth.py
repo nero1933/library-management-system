@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from api.v1.models import User
-from config import SECRET_KEY, ALGORITHM
+from config import SECRET_KEY, ALGORITHM, MAX_BORROWS
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -34,7 +34,8 @@ def create_user(db: Session,
         username=username,
         email=email,
         full_name=full_name,
-        hashed_password=hashed_password
+        hashed_password=hashed_password,
+        max_borrows=int(MAX_BORROWS)
     )
     db.add(user)
     db.commit()
