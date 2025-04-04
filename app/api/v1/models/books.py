@@ -7,7 +7,7 @@ class Author(Base):
     __tablename__ = 'authors'
 
     id = Column(Integer, primary_key=True)
-    name = Column(String)
+    name = Column(String, unique=True, nullable=False)
 
 
 class Book(Base):
@@ -16,7 +16,7 @@ class Book(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     author_id = Column(Integer, ForeignKey('authors.id'), nullable=False)
-    isbn = Column(String, nullable=False)
+    isbn = Column(String, unique=True, nullable=False)
     publish_date = Column(DateTime, nullable=False)
 
 #

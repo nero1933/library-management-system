@@ -1,4 +1,6 @@
 fastapi[all]
+pyjwt[crypto]
+passlib
 uvicorn
 pydantic
 psycopg2-binary
