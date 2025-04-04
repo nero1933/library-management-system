@@ -6,7 +6,7 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from api.v1.models import User
 from config import SECRET_KEY, ALGORITHM, MAX_BORROWS
-from db import db_dependency, get_db
+from db import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')

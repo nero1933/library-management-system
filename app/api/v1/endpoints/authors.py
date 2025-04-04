@@ -1,10 +1,12 @@
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException, Depends
+from sqlalchemy.orm import Session
+
 from api.v1 import models
 from api.v1 import schemas
 from api.v1.services import map_book_to_response
 from api.v1.models import Book, Author, Genre, Publisher
 from api.v1.schemas import BookResponseSchema
-from db import db_dependency
+from db import get_db
 
 router = APIRouter(prefix='/authors', tags=['authors'])
 
@@ -12,7 +14,7 @@ router = APIRouter(prefix='/authors', tags=['authors'])
 @router.post('',
              response_model=schemas.AuthorResponseSchema,
              status_code=status.HTTP_201_CREATED)
-def create_author(author: schemas.AuthorSchema, db: db_dependency):
+def create_author(author: schemas.AuthorSchema, db: Session = Depends(get_db)):
     existing_author = db.query(models.Author).filter(models.Author.name == author.name).first()
     if existing_author:
         raise HTTPException(
@@ -30,7 +32,7 @@ def create_author(author: schemas.AuthorSchema, db: db_dependency):
 @router.get('',
             response_model=list[schemas.AuthorResponseSchema],
             status_code=status.HTTP_200_OK)
-def get_authors(db: db_dependency):
+def get_authors(db: Session = Depends(get_db)):
     authors = db.query(models.Author).all()
     return authors
 
@@ -38,7 +40,7 @@ def get_authors(db: db_dependency):
 @router.get('/{author_id}/books',
             response_model=list[BookResponseSchema],
             status_code=status.HTTP_200_OK)
-def get_books_by_author(author_id: int, db: db_dependency):
+def get_books_by_author(author_id: int, db: Session = Depends(get_db)):
     # Perform the query to get all books by a specific author
     books = db.query(Book, Author, Genre, Publisher). \
         join(Author, Book.author_id == Author.id). \

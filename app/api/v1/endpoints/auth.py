@@ -1,9 +1,9 @@
 from fastapi import APIRouter, HTTPException, status, Response, Depends
+from sqlalchemy.orm import Session
 
-from api.v1.models import User
-from db import db_dependency
+from db import get_db
 from api.v1.schemas import TokenDataSchema, UserResponseSchema, UserCreateSchema, UserAuthSchema
-from api.v1.services import create_user, verify_password, create_auth_token, get_user_by_email, get_user_from_token
+from api.v1.services import create_user, verify_password, create_auth_token, get_user_by_email
 from config import ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter(prefix='/auth', tags=['auth'])
@@ -13,7 +13,7 @@ router = APIRouter(prefix='/auth', tags=['auth'])
 @router.post('/register',
              response_model=UserResponseSchema,
              status_code=status.HTTP_201_CREATED)
-def register(user_data: UserCreateSchema, db: db_dependency):
+def register(user_data: UserCreateSchema, db: Session = Depends(get_db)):
     existing_user = get_user_by_email(db, user_data.email)
 
     if existing_user:
@@ -38,7 +38,7 @@ def register(user_data: UserCreateSchema, db: db_dependency):
 
 
 @router.post('/login', response_model=TokenDataSchema)
-def login(response: Response, user_data: UserAuthSchema, db: db_dependency):
+def login(response: Response, user_data: UserAuthSchema, db: Session = Depends(get_db)):
     user = get_user_by_email(db, user_data.email)
     if not user or not verify_password(user_data.password, user.hashed_password):
         raise HTTPException(
@@ -56,23 +56,3 @@ def login(response: Response, user_data: UserAuthSchema, db: db_dependency):
 
     # Return 'access_token' in the response
     return {'access_token': access_token, 'token_type': 'bearer'}
-
-
-@router.get("/user/{user_id}", response_model=UserResponseSchema)
-def get_user_profile(user_id: int,
-                     db: db_dependency,
-                     current_user: User = Depends(get_user_from_token)):
-    """
-    Get user credentials. The user can only view their own profile.
-    """
-    if current_user.id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="You can only view your own profile")
-
-    return UserResponseSchema(
-        id=current_user.id,
-        username=current_user.username,
-        email=current_user.email,
-        full_name=current_user.full_name,
-        created_at=current_user.created_at
-    )

@@ -1,40 +1,23 @@
-from fastapi import APIRouter, HTTPException, status
+from datetime import datetime
+from typing import List
+
+from fastapi import APIRouter, HTTPException, status, Depends
 from sqlalchemy.exc import IntegrityError
-from api.v1.models import Book, Author, Genre, Publisher
-from api.v1.schemas import BookResponseSchema, BookCreateSchema
+from sqlalchemy.orm import Session
+
+from api.v1.models import Book, Author, Genre, Publisher, User, BookTransaction
+from api.v1.schemas import BookResponseSchema, BookCreateSchema, UserResponseSchema
+from api.v1.schemas.borrow import BorrowResponseSchema
+from api.v1.services import get_user_from_token
 from api.v1.services.book_mapping import map_book_to_response
-from db import db_dependency
+from db import get_db
 
 router = APIRouter(prefix="/books", tags=["books"])
 
 
-# def map_book_to_response(db_book, author, genre, publisher):
-#     return BookResponseSchema(
-#         id=db_book.id,
-#         title=db_book.title,
-#         author=AuthorResponseSchema(
-#             id=author.id,
-#             name=author.name,
-#             birthdate=author.birthdate,
-#         ),
-#         genre=GenreResponseSchema(
-#             id=genre.id,
-#             name=genre.name
-#         ),
-#         publisher=PublisherResponseSchema(
-#             id=publisher.id,
-#             name=publisher.name,
-#             established_year=publisher.established_year,
-#         ),
-#         publish_date=db_book.publish_date,
-#         qty_in_library=db_book.qty_in_library,
-#         isbn=db_book.isbn,
-#     )
-
-
 @router.post('', response_model=BookResponseSchema,
              status_code=status.HTTP_201_CREATED)
-def create_book(book: BookCreateSchema, db: db_dependency):
+def create_book(book: BookCreateSchema, db: Session = Depends(get_db)):
     try:
         db_book = Book(
             title=book.title,
@@ -71,7 +54,7 @@ def create_book(book: BookCreateSchema, db: db_dependency):
 
 
 @router.get('', response_model=list[BookResponseSchema])
-def get_book(db: db_dependency):
+def get_book(db: Session = Depends(get_db)):
     # Perform the join in a single query
     books = db.query(Book, Author, Genre, Publisher). \
         join(Author, Book.author_id == Author.id). \
@@ -85,7 +68,7 @@ def get_book(db: db_dependency):
     return book_list
 
 @router.get('/{book_id}', response_model=BookResponseSchema)
-def get_book_by_id(book_id: int, db: db_dependency):
+def get_book_by_id(book_id: int, db: Session = Depends(get_db)):
     # Perform the query to get a specific book by its ID
     book = db.query(Book, Author, Genre, Publisher). \
         join(Author, Book.author_id == Author.id). \
@@ -101,3 +84,125 @@ def get_book_by_id(book_id: int, db: db_dependency):
 
     # Map the results into BookResponseSchema with nested entities
     return map_book_to_response(db_book, author, genre, publisher)
+
+
+@router.post("/{book_id}/borrow",
+             response_model=BorrowResponseSchema,
+             status_code=status.HTTP_201_CREATED)
+def borrow_book(book_id: int,
+                db: Session = Depends(get_db),
+                current_user: User = Depends(get_user_from_token)):
+
+    book = db.query(Book) \
+        .filter(Book.id == book_id).first()
+
+    if not book:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found"
+        )
+
+    if book.qty_in_library < 1:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"No books {book.title} available for now"
+        )
+
+    active_borrows = db.query(BookTransaction).filter(
+        BookTransaction.user_id == current_user.id,
+        BookTransaction.returned_at.is_(None) # Only active borrows
+    ).all()
+
+    print('len(active_borrows)', len(active_borrows))
+
+    if len(active_borrows) > current_user.max_borrows:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Exceeded limit of borrowing books"
+        )
+
+    if any(transaction.book_id == book.id for transaction in active_borrows):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="You have already borrowed this book"
+        )
+
+    borrow = BookTransaction(
+        user_id=current_user.id,
+        book_id=book.id
+    )
+    db.add(borrow)
+
+    # Decrease amount of books in library by 1
+    book.qty_in_library -= 1
+
+    db.commit()
+    db.refresh(borrow)
+
+    return borrow
+
+
+@router.post("/{book_id}/return",
+             response_model=BorrowResponseSchema,
+             status_code=status.HTTP_201_CREATED)
+def return_book(book_id: int,
+                db: Session = Depends(get_db),
+                current_user: User = Depends(get_user_from_token)):
+
+    book = db.query(Book) \
+        .filter(Book.id == book_id).first()
+
+    if not book:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found"
+        )
+
+    borrow = db.query(BookTransaction) \
+        .filter( # Same user who borrowed this book
+                BookTransaction.user_id == current_user.id,
+                BookTransaction.book_id == book.id,
+                # If borrow is still active (returned_at is None)
+                BookTransaction.returned_at.is_(None)) \
+        .first()
+
+    if not borrow:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Borrow transaction wasn't found"
+        )
+
+    # Returned at set to now
+    borrow.returned_at = datetime.utcnow()
+
+    # Increase quantity of current book in library by one
+    book.qty_in_library += 1
+
+    db.commit()
+
+    # Refresh to return updated values
+    db.refresh(borrow)
+
+    return borrow
+
+
+@router.get("/{book_id}/history",
+             response_model=List[BorrowResponseSchema],
+             status_code=status.HTTP_200_OK)
+def view_borrow_history(book_id: int,
+                        db: Session = Depends(get_db)):
+
+    book = db.query(Book) \
+        .filter(Book.id == book_id).first()
+
+    if not book:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found"
+        )
+
+    history = db.query(BookTransaction).filter(
+        BookTransaction.book_id == book_id).all()
+
+    return history
+

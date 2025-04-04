@@ -1,13 +1,15 @@
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException, Depends
+from sqlalchemy.orm import Session
+
 from api.v1 import models
 from api.v1 import schemas
-from db import db_dependency
+from db import get_db
 
 router = APIRouter(prefix='/genres', tags=['genres'])
 
 
 @router.post('', response_model=schemas.GenreResponseSchema, status_code=status.HTTP_201_CREATED)
-async def create_genre(genre: schemas.GenreSchema, db: db_dependency):
+async def create_genre(genre: schemas.GenreSchema, db: Session = Depends(get_db)):
     existing_genre = db.query(models.Genre).filter(models.Genre.name == genre.name).first()
     if existing_genre:
         raise HTTPException(
@@ -23,6 +25,6 @@ async def create_genre(genre: schemas.GenreSchema, db: db_dependency):
 
 
 @router.get('', response_model=list[schemas.GenreResponseSchema])
-def get_genre(db: db_dependency):
+def get_genre(db: Session = Depends(get_db)):
     genre = db.query(models.Genre).all()
     return genre

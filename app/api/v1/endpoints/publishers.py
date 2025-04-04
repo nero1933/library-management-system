@@ -1,7 +1,9 @@
-from fastapi import APIRouter, status, HTTPException
+from fastapi import APIRouter, status, HTTPException, Depends
+from sqlalchemy.orm import Session
+
 from api.v1 import models
 from api.v1 import schemas
-from db import db_dependency
+from db import get_db
 
 router = APIRouter(prefix='/publishers', tags=['publishers'])
 
@@ -9,7 +11,7 @@ router = APIRouter(prefix='/publishers', tags=['publishers'])
 @router.post('',
              response_model=schemas.PublisherResponseSchema,
              status_code=status.HTTP_201_CREATED)
-async def create_publisher(publisher: schemas.PublisherSchema, db: db_dependency):
+async def create_publisher(publisher: schemas.PublisherSchema, db: Session = Depends(get_db)):
     existing_publisher = db.query(models.Publisher).filter(
         models.Publisher.name == publisher.name).first()
 
@@ -30,6 +32,6 @@ async def create_publisher(publisher: schemas.PublisherSchema, db: db_dependency
 
 
 @router.get('', response_model=list[schemas.PublisherResponseSchema])
-def get_publisher(db: db_dependency):
+def get_publisher(db: Session = Depends(get_db)):
     publisher = db.query(models.Publisher).all()
     return publisher
