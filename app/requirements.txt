@@ -1,5 +1,5 @@
 fastapi[all]
-pyjwt[crypto]
+PyJWT
 passlib
 uvicorn
 pydantic
@@ -9,3 +9,4 @@ asyncpg
 databases
 alembic
 greenlet
+isbnlib

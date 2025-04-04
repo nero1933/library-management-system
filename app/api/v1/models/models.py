@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from db import Base
 
@@ -10,7 +10,7 @@ class BookTransaction(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey('users.id'), nullable=False)
     book_id = Column(Integer, ForeignKey('books.id'), nullable=False)
-    borrowed_at  = Column(DateTime, nullable=False)
+    borrowed_at  = Column(DateTime, default=datetime.utcnow, nullable=False)
     returned_at = Column(DateTime, nullable=True)
 
     book = relationship('Book', back_populates='transactions')
@@ -36,13 +36,17 @@ class Author(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
-    birthdate = Column(DateTime, nullable=False)
+    birthdate = Column(Date, nullable=False)
+
+    books = relationship('Book', back_populates='author')
 
 
 class Genre(Base):
     __tablename__ = 'genres'
     id = Column(Integer, primary_key=True)
     name = Column(String, unique=True, nullable=False)
+
+    books = relationship('Book', back_populates='genre')
 
 
 class Book(Base):
@@ -53,11 +57,14 @@ class Book(Base):
     author_id = Column(Integer, ForeignKey('authors.id'), nullable=False)
     genre_id = Column(Integer, ForeignKey('genres.id'), nullable=False)
     publisher_id = Column(Integer, ForeignKey('publishers.id'), nullable=False)
-    publish_date = Column(DateTime, nullable=False)
+    publish_date = Column(Date, nullable=False)
     qty_in_library = Column(Integer, nullable=False)
     isbn = Column(String, unique=True, nullable=False)
 
     transactions = relationship('BookTransaction', back_populates='book')
+    author = relationship('Author', back_populates='books')
+    genre = relationship('Genre', back_populates='books')
+    publisher = relationship('Publisher', back_populates='books')
 
 
 class Publisher(Base):
@@ -66,3 +73,5 @@ class Publisher(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String, unique=True, nullable=False)
     established_year = Column(Integer, nullable=False)
+
+    books = relationship('Book', back_populates='publisher')
