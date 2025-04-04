@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Date
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Date, UniqueConstraint
 from sqlalchemy.orm import relationship
 from db import Base
 
@@ -65,6 +65,11 @@ class Book(Base):
     author = relationship('Author', back_populates='books')
     genre = relationship('Genre', back_populates='books')
     publisher = relationship('Publisher', back_populates='books')
+
+    __table_args__ = (
+        # One auther cannot have two books with same title
+        UniqueConstraint('title', 'author_id', name='uq_title_author'),
+    )
 
 
 class Publisher(Base):
