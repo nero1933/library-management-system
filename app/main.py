@@ -1,6 +1,9 @@
 import uvicorn
+from fastapi import FastAPI
+
 from api.v1.endpoints import authors, auth, genres, publishers, books, users
-from app import app
+
+app = FastAPI()
 
 app.include_router(authors.router)
 app.include_router(auth.router)

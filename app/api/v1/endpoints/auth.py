@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from db import get_db
 from api.v1.schemas import TokenDataSchema, UserResponseSchema, UserCreateSchema, UserAuthSchema
 from api.v1.services import create_user, verify_password, create_auth_token, get_user_by_email
-from config import ACCESS_TOKEN_EXPIRE_MINUTES, REFRESH_TOKEN_EXPIRE_MINUTES
+from core.config import settings
 
 router = APIRouter(prefix='/auth', tags=['auth'])
 # oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')
@@ -47,11 +47,11 @@ def login(response: Response, user_data: UserAuthSchema, db: Session = Depends(g
         )
 
     # Create access and refresh tokens
-    access_token = create_auth_token(user.id, int(ACCESS_TOKEN_EXPIRE_MINUTES))
-    refresh_token = create_auth_token(user.id, int(REFRESH_TOKEN_EXPIRE_MINUTES))
+    access_token = create_auth_token(user.id, int(settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+    refresh_token = create_auth_token(user.id, int(settings.REFRESH_TOKEN_EXPIRE_MINUTES))
 
     # Set 'refresh_token' in cookie with httponly=True
-    max_age = REFRESH_TOKEN_EXPIRE_MINUTES * 60 # to seconds
+    max_age = settings.REFRESH_TOKEN_EXPIRE_MINUTES * 60 # to seconds
     response.set_cookie(key='refresh_token', value=refresh_token, httponly=True, max_age=max_age)
 
     # Return 'access_token' in the response

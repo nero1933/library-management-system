@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from api.v1.models import User
-from config import SECRET_KEY, ALGORITHM, MAX_BORROWS
+from core.config import settings
 from db import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -31,7 +31,7 @@ def create_user(db: Session,
         email=email,
         full_name=full_name,
         hashed_password=hashed_password,
-        max_borrows=int(MAX_BORROWS)
+        max_borrows=int(settings.MAX_BORROWS)
     )
     db.add(user)
     db.commit()
@@ -49,7 +49,7 @@ def create_auth_token(user_id: int, token_lifetime: int):
         'exp': int(expire.timestamp())
     }
 
-    token = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    token = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return token
 
 
@@ -59,7 +59,7 @@ def get_user_from_token(
 ):
     try:
         # Decode the token and verify it
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id = payload.get("sub")  # "sub" is used for the user ID
         if user_id is None:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Token is invalid")
