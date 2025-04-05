@@ -1,13 +1,22 @@
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Set
 
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 
 class BorrowCreateSchema(BaseModel):
     user_id: int
     book_id: int
 
+class BorrowMultipleCreateSchema(BaseModel):
+    book_ids: Set[int]
+
+    @validator('book_ids')
+    def check_not_empty(cls, value):
+        if not value:
+            raise ValueError('book_ids cannot be empty')
+
+        return value
 
 class BorrowResponseSchema(BaseModel):
     id: int

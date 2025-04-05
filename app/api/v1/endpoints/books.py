@@ -130,104 +130,104 @@ def create_book(book: BookCreateSchema, db: Session = Depends(get_db)):
         raise HTTPException(status_code=400, detail="Something went wrong")
 
 
-@router.post("/{book_id}/borrow",
-             response_model=BorrowResponseSchema,
-             status_code=status.HTTP_201_CREATED)
-def borrow_book(book_id: int,
-                db: Session = Depends(get_db),
-                current_user: User = Depends(get_user_from_token)):
+# @router.post("/{book_id}/borrow",
+#              response_model=BorrowResponseSchema,
+#              status_code=status.HTTP_201_CREATED)
+# def borrow_book(book_id: int,
+#                 db: Session = Depends(get_db),
+#                 current_user: User = Depends(get_user_from_token)):
+#
+#     book = db.query(Book) \
+#         .filter(Book.id == book_id).first()
+#
+#     if not book:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="Book not found"
+#         )
+#
+#     if book.qty_in_library < 1:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail=f"No books {book.title} available for now"
+#         )
+#
+#     active_borrows = db.query(BookTransaction).filter(
+#         BookTransaction.user_id == current_user.id,
+#         BookTransaction.returned_at.is_(None) # Only active borrows
+#     ).all()
+#
+#     print('len(active_borrows)', len(active_borrows))
+#
+#     if len(active_borrows) > current_user.max_borrows:
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="Exceeded limit of borrowing books"
+#         )
+#
+#     if any(transaction.book_id == book.id for transaction in active_borrows):
+#         raise HTTPException(
+#             status_code=status.HTTP_400_BAD_REQUEST,
+#             detail="You have already borrowed this book"
+#         )
+#
+#     borrow = BookTransaction(
+#         user_id=current_user.id,
+#         book_id=book.id
+#     )
+#     db.add(borrow)
+#
+#     # Decrease amount of books in library by 1
+#     book.qty_in_library -= 1
+#
+#     db.commit()
+#     db.refresh(borrow)
+#
+#     return borrow
 
-    book = db.query(Book) \
-        .filter(Book.id == book_id).first()
 
-    if not book:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Book not found"
-        )
-
-    if book.qty_in_library < 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"No books {book.title} available for now"
-        )
-
-    active_borrows = db.query(BookTransaction).filter(
-        BookTransaction.user_id == current_user.id,
-        BookTransaction.returned_at.is_(None) # Only active borrows
-    ).all()
-
-    print('len(active_borrows)', len(active_borrows))
-
-    if len(active_borrows) > current_user.max_borrows:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Exceeded limit of borrowing books"
-        )
-
-    if any(transaction.book_id == book.id for transaction in active_borrows):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You have already borrowed this book"
-        )
-
-    borrow = BookTransaction(
-        user_id=current_user.id,
-        book_id=book.id
-    )
-    db.add(borrow)
-
-    # Decrease amount of books in library by 1
-    book.qty_in_library -= 1
-
-    db.commit()
-    db.refresh(borrow)
-
-    return borrow
-
-
-@router.post("/{book_id}/return",
-             response_model=BorrowResponseSchema,
-             status_code=status.HTTP_201_CREATED)
-def return_book(book_id: int,
-                db: Session = Depends(get_db),
-                current_user: User = Depends(get_user_from_token)):
-
-    book = db.query(Book) \
-        .filter(Book.id == book_id).first()
-
-    if not book:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Book not found"
-        )
-
-    borrow = db.query(BookTransaction) \
-        .filter( # Same user who borrowed this book
-                BookTransaction.user_id == current_user.id,
-                BookTransaction.book_id == book.id,
-                # If borrow is still active (returned_at is None)
-                BookTransaction.returned_at.is_(None)) \
-        .first()
-
-    if not borrow:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Borrow transaction wasn't found"
-        )
-
-    # Returned at set to now
-    borrow.returned_at = datetime.utcnow()
-
-    # Increase quantity of current book in library by one
-    book.qty_in_library += 1
-
-    db.commit()
-
-    # Refresh to return updated values
-    db.refresh(borrow)
-
-    return borrow
+# @router.post("/{book_id}/return",
+#              response_model=BorrowResponseSchema,
+#              status_code=status.HTTP_201_CREATED)
+# def return_book(book_id: int,
+#                 db: Session = Depends(get_db),
+#                 current_user: User = Depends(get_user_from_token)):
+#
+#     book = db.query(Book) \
+#         .filter(Book.id == book_id).first()
+#
+#     if not book:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="Book not found"
+#         )
+#
+#     borrow = db.query(BookTransaction) \
+#         .filter( # Same user who borrowed this book
+#                 BookTransaction.user_id == current_user.id,
+#                 BookTransaction.book_id == book.id,
+#                 # If borrow is still active (returned_at is None)
+#                 BookTransaction.returned_at.is_(None)) \
+#         .first()
+#
+#     if not borrow:
+#         raise HTTPException(
+#             status_code=status.HTTP_404_NOT_FOUND,
+#             detail="Borrow transaction wasn't found"
+#         )
+#
+#     # Returned at set to now
+#     borrow.returned_at = datetime.utcnow()
+#
+#     # Increase quantity of current book in library by one
+#     book.qty_in_library += 1
+#
+#     db.commit()
+#
+#     # Refresh to return updated values
+#     db.refresh(borrow)
+#
+#     return borrow
 
 
 @router.get("/{book_id}/history",

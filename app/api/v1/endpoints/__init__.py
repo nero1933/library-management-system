@@ -4,3 +4,4 @@ from .books import *
 from .genres import *
 from .publishers import *
 from .users import *
+from .book_transactions import *
