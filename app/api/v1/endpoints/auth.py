@@ -1,43 +1,59 @@
 import jwt
 from fastapi import APIRouter, HTTPException, status, Response, Depends, Request
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from api.v1.models import User
 from db import get_db
 from api.v1.schemas import TokenDataSchema, UserResponseSchema, UserCreateSchema, UserAuthSchema
-from api.v1.services import create_user, verify_password, create_auth_token, get_user_by_email, get_user_from_token, \
-    get_user_by_id
+from api.v1.services import create_user, verify_password, create_auth_token, get_user_by_email, get_user_from_token
 from core.config import settings
 
 router = APIRouter(prefix='/auth', tags=['auth'])
-# oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')
 
 
 @router.post('/register',
              response_model=UserResponseSchema,
              status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreateSchema, db: Session = Depends(get_db)):
-    existing_user = get_user_by_email(db, user_data.email)
+    # existing_user = get_user_by_email(db, user_data.email)
+    # print()
+    #
+    # if existing_user:
+    #
+    #     print(existing_user.username)
+    #
+    #     if existing_user.email == user_data.email:
+    #         raise HTTPException(
+    #             status_code=400,
+    #             detail="Email already registered"
+    #         )
+    #     if existing_user.username == user_data.username:
+    #         raise HTTPException(
+    #             status_code=400,
+    #             detail="Username already taken"
+    #         )
+    try:
+        return create_user(
+            db,
+            user_data.username,
+            user_data.email,
+            user_data.full_name,
+            user_data.password,
+        )
+    except IntegrityError as e:
+        db.rollback()
 
-    if existing_user:
-        if existing_user.email == user_data.email:
-            raise HTTPException(
-                status_code=400,
-                detail="Email already registered"
-            )
-        if existing_user.username == user_data.username:
-            raise HTTPException(
-                status_code=400,
-                detail="Username already taken"
-            )
-
-    return create_user(
-        db,
-        user_data.username,
-        user_data.email,
-        user_data.full_name,
-        user_data.password,
-    )
+        if 'unique constraint' in str(e.orig):
+            if 'email' in str(e.orig):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"User with email {user_data.email} already exists"
+                )
+            elif 'username' in str(e.orig):
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Book with username {user_data.username} already taken"
+                )
 
 
 @router.post('/login', response_model=TokenDataSchema)

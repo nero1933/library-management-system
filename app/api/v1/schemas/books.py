@@ -1,5 +1,5 @@
 from datetime import date
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, field_validator, ConfigDict
 from typing import Optional
 from isbnlib import is_isbn10, is_isbn13
 
@@ -14,14 +14,14 @@ class BookBaseSchema(BaseModel):
     qty_in_library: int
     isbn: str
 
-    @validator('publish_date')
+    @field_validator('publish_date')
     def validate_publish_date(cls, value):
         if value > date.today():
             raise ValueError("Year of publish cannot be in the future")
 
         return value
 
-    @validator('qty_in_library')
+    @field_validator('qty_in_library')
     def validate_qty_in_library(cls, value):
         if value < 0:
             raise ValueError("Quantity of books in library cannot be negative")
@@ -60,5 +60,7 @@ class BookResponseSchema(BaseModel):
     qty_in_library: int
     isbn: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
+    # class Config:
+    #     from_attributes = True

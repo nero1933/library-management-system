@@ -1,13 +1,13 @@
 from datetime import date
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, field_validator
 
 
 class PublisherSchema(BaseModel):
     name: str
     established_year: int
 
-    @validator('established_year')
+    @field_validator('established_year')
     def validator_established_year(cls, value):
         if value > date.today().year:
             raise ValueError("Year of establishment cannot be in the future")

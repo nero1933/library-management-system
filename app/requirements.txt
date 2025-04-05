@@ -10,3 +10,5 @@ databases
 alembic
 greenlet
 isbnlib
+pytest
+httpx

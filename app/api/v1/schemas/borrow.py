@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Optional, Set
 
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, validator, field_validator, ConfigDict
 
 
 class BorrowCreateSchema(BaseModel):
@@ -11,7 +11,7 @@ class BorrowCreateSchema(BaseModel):
 class BorrowMultipleCreateSchema(BaseModel):
     book_ids: Set[int]
 
-    @validator('book_ids')
+    @field_validator('book_ids')
     def check_not_empty(cls, value):
         if not value:
             raise ValueError('book_ids cannot be empty')
@@ -24,3 +24,5 @@ class BorrowResponseSchema(BaseModel):
     book_id: int
     borrowed_at: datetime
     returned_at: Optional[datetime]
+
+    model_config = ConfigDict(from_attributes=True)
