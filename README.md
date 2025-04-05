@@ -1,7 +1,5 @@
 # Library Management System
 
-***
-
 ## How to install:
 1) Clone project
 2) Rename .env_example to .env (no changes in the file)
@@ -29,7 +27,7 @@ POST /authors
 GET /authors/{author_id}/books
 *
 
-***
+##
 
 ### auth
 POST /auth/register
@@ -41,7 +39,7 @@ POST /auth/login
 POST /auth/refresh_token
 *
 
-***
+##
 
 ### genres
 GET /genres
@@ -50,7 +48,7 @@ GET /genres
 POST /genres
 *
 
-***
+##
 
 ### publishers
 GET /publishers
@@ -59,11 +57,11 @@ GET /publishers
 POST /publishers
 *
 
-***
+##
 
 ### books
 GET /books
-* Returns list of books with related models.
+* Returns a list of books with related models.
 
 POST /books
 * Cannot be two books with same title and same authors.
@@ -77,7 +75,7 @@ GET /books/{book_id}
 GET /book/{book_id}/history
 * Returns a transaction history for certain book
 
-***
+##
 
 ### users
 GET /users/me
@@ -86,7 +84,7 @@ GET /users/me
 POST /users/history
 *
 
-***
+##
 
 ### book_transactions
 GET /borrow
