@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException, status, Response, Depends
+import jwt
+from fastapi import APIRouter, HTTPException, status, Response, Depends, Request
 from sqlalchemy.orm import Session
 
+from api.v1.models import User
 from db import get_db
 from api.v1.schemas import TokenDataSchema, UserResponseSchema, UserCreateSchema, UserAuthSchema
-from api.v1.services import create_user, verify_password, create_auth_token, get_user_by_email
+from api.v1.services import create_user, verify_password, create_auth_token, get_user_by_email, get_user_from_token, \
+    get_user_by_id
 from core.config import settings
 
 router = APIRouter(prefix='/auth', tags=['auth'])
@@ -56,3 +59,25 @@ def login(response: Response, user_data: UserAuthSchema, db: Session = Depends(g
 
     # Return 'access_token' in the response
     return {'access_token': access_token, 'token_type': 'bearer'}
+
+
+@router.post("/refresh", response_model=TokenDataSchema)
+def refresh_token(request: Request, db: Session = Depends(get_db)):
+    try:
+        # Retrieve the refresh token from the cookies
+        refresh_token = request.cookies.get("refresh_token")
+        if not refresh_token:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token not found in cookies"
+            )
+        # Creates new access token and returns it
+        user = get_user_from_token(token=refresh_token, db=db)
+        access_token = create_auth_token(user.id, int(settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+        return {'access_token': access_token, 'token_type': 'bearer'}
+
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token"
+        )
