@@ -1,6 +1,5 @@
 from datetime import date
-from pydantic import BaseModel, validator, field_validator, ConfigDict
-from typing import Optional
+from pydantic import BaseModel, field_validator, ConfigDict
 from isbnlib import is_isbn10, is_isbn13
 
 from .authors import AuthorResponseSchema

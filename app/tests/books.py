@@ -66,7 +66,7 @@ def test_create_book_with_invalid_relations(client):
         'publisher_id': str(1),
         'publish_date': '2000-01-01',
         'qty_in_library': '10',
-        'isbn': '0-471-95869-7' # not in db yet
+        'isbn': '0-19-852663-6' # not in db yet
     }
 
     response = client.post('/books', json=data)
@@ -87,7 +87,6 @@ def test_create_book_with_invalid_relations(client):
     data['publisher_id'] = str(1)
 
     response = client.post('/books', json=data)
-    print(response.json())
     assert response.status_code == 201
 
 
@@ -104,9 +103,9 @@ def test_create_book_with_invalid_publish_date(client):
     }
 
     response = client.post('/books', json=data)
-    print()
-    print(response.status_code)
-    print(response.json())
+    # print()
+    # print(response.status_code)
+    # print(response.json())
     assert response.status_code == 422
 
 def test_create_book_with_invalid_isbn(client):
