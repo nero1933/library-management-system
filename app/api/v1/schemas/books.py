@@ -28,14 +28,13 @@ class BookBaseSchema(BaseModel):
 
         return value
 
-    # /// TEMPORARY COMMENTED! \\\
-    #
-    # @validator('isbn')
-    # def validate_isbn(cls, value):
-    #     if not is_isbn10(value) and not is_isbn13(value):
-    #         raise ValueError("Invalid ISBN")
-    #
-    #     return value
+
+    @field_validator('isbn')
+    def validate_isbn(cls, value):
+        if not is_isbn10(value) and not is_isbn13(value):
+            raise ValueError("Invalid ISBN")
+
+        return value
 
 
 class BookCreateSchema(BookBaseSchema):
