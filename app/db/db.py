@@ -9,15 +9,15 @@ from sqlalchemy.orm import sessionmaker
 from core import settings
 
 
-logging.basicConfig(
-    format="%(message)s",
-    level=logging.INFO)
-
-
-@event.listens_for(Engine, "before_cursor_execute")
-def log_sql_query(conn, cursor, statement, parameters, context, executemany):
-    if not settings.DISABLE_SQL_LOGGING:
-        logging.info(f"SQL --->  {statement}")
+# logging.basicConfig(
+#     format="%(message)s",
+#     level=logging.INFO)
+#
+#
+# @event.listens_for(Engine, "before_cursor_execute")
+# def log_sql_query(conn, cursor, statement, parameters, context, executemany):
+#     if not settings.DISABLE_SQL_LOGGING:
+#         logging.info(f"SQL --->  {statement}")
 
 
 engine = create_engine(settings.DATABASE_URL)

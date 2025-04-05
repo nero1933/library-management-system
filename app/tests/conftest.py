@@ -1,6 +1,4 @@
-import os
 from datetime import date
-from unittest.mock import patch
 
 import pytest
 from fastapi.testclient import TestClient
@@ -8,6 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session
 
 from api.v1.models import User, Author, Genre, Publisher, Book
+from api.v1.services import create_user
 from core import settings
 from db import Base, get_db
 from main import app
@@ -15,6 +14,12 @@ from main import app
 
 engine = create_engine(settings.TEST_DATABASE_URL)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+def get_jwt_token(client, email: str, password: str):
+    response = client.post('/auth/login', json={"email": email, "password": password})
+    assert response.status_code == 200
+    return response.json()["access_token"]
 
 
 @pytest.fixture(autouse=True)
@@ -56,19 +61,24 @@ def db():
 @pytest.fixture
 def create_user_fixture(db: Session):
     def _create_user():
-        user = User(
+        user = create_user(
+            db,
             username='test_user',
             email='test_user@gmail.com',
-            hashed_password='123456789',
+            password='123456789',
             full_name='test_user',
-            max_borrows=3,
         )
-        db.add(user)
-        db.commit()
-        db.refresh(user)
         return user
 
     return _create_user
+
+
+@pytest.fixture
+def client_with_auth(client, create_user_fixture, db: Session):
+    user = db.query(User).filter(User.username == 'test_user').first()
+    token = get_jwt_token(client, user.email, "123456789")
+    client.headers.update({"Authorization": f"Bearer {token}"})
+    yield client
 
 
 # @pytest.fixture

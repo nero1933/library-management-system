@@ -1,10 +1,9 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
-from sqlalchemy import desc
+from fastapi import APIRouter, Depends, status, Query
 from sqlalchemy.orm import Session
 
-from api.v1.models import User, BookTransaction
+from api.v1.models import User
 from api.v1.schemas import UserResponseSchema
 from api.v1.schemas.borrow import BorrowResponseSchema
 from api.v1.services import get_user_from_token, get_borrow_history
@@ -13,17 +12,11 @@ from db import get_db
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/{user_id}", response_model=UserResponseSchema)
-def get_user_profile(user_id: int,
-                     db: Session = Depends(get_db),
-                     current_user: User = Depends(get_user_from_token)):
+@router.get("/me", response_model=UserResponseSchema)
+def get_user_profile(current_user: User = Depends(get_user_from_token)):
     """
-    Get user credentials. The user can only view their own profile.
+    Get user credentials.
     """
-
-    if current_user.id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="You can only view your own profile")
 
     return UserResponseSchema(
         id=current_user.id,
@@ -34,21 +27,25 @@ def get_user_profile(user_id: int,
     )
 
 
-@router.get("/{user_id}/history",
+@router.get("/history",
              response_model=List[BorrowResponseSchema],
              status_code=status.HTTP_200_OK)
 def view_users_borrow_history(
-        user_id: int,
         limit: int = Query(10, ge=1, le=100),
         offset: int = Query(0, ge=0),
         active: bool = Query(None),
         db: Session = Depends(get_db),
         current_user: User = Depends(get_user_from_token)):
+    """
+    Get user transaction history.
+    """
 
-    if current_user.id != user_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
-                            detail="You can only view your own profile")
-
-    history = get_borrow_history(db=db, user_id=user_id, active=active, limit=limit, offset=offset)
+    history = get_borrow_history(
+        db=db,
+        user_id=current_user.id,
+        active=active,
+        limit=limit,
+        offset=offset
+    )
 
     return history
