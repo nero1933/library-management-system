@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int
     REFRESH_TOKEN_EXPIRE_MINUTES: int
     MAX_BORROWS: int
+    DISABLE_SQL_LOGGING: bool
 
     # model_config = ConfigDict(env_file=".env")
 

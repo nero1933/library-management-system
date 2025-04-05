@@ -15,23 +15,6 @@ router = APIRouter(prefix='/auth', tags=['auth'])
              response_model=UserResponseSchema,
              status_code=status.HTTP_201_CREATED)
 def register(user_data: UserCreateSchema, db: Session = Depends(get_db)):
-    # existing_user = get_user_by_email(db, user_data.email)
-    # print()
-    #
-    # if existing_user:
-    #
-    #     print(existing_user.username)
-    #
-    #     if existing_user.email == user_data.email:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Email already registered"
-    #         )
-    #     if existing_user.username == user_data.username:
-    #         raise HTTPException(
-    #             status_code=400,
-    #             detail="Username already taken"
-    #         )
     try:
         return create_user(
             db,
@@ -74,7 +57,7 @@ def login(response: Response, user_data: UserAuthSchema, db: Session = Depends(g
     response.set_cookie(key='refresh_token', value=refresh_token, httponly=True, max_age=max_age)
 
     # Return 'access_token' in the response
-    return {'access_token': access_token, 'token_type': 'bearer'}
+    return {'access_token': access_token}
 
 
 @router.post("/refresh", response_model=TokenDataSchema)
@@ -90,7 +73,7 @@ def refresh_token(request: Request, db: Session = Depends(get_db)):
         # Creates new access token and returns it
         user = get_user_from_token(token=refresh_token, db=db)
         access_token = create_auth_token(user.id, int(settings.ACCESS_TOKEN_EXPIRE_MINUTES))
-        return {'access_token': access_token, 'token_type': 'bearer'}
+        return {'access_token': access_token}
 
     except jwt.PyJWTError:
         raise HTTPException(

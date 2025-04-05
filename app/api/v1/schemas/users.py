@@ -31,4 +31,3 @@ class UserAuthSchema(BaseModel):
 
 class TokenDataSchema(BaseModel):
     access_token: str
-    token_type: str

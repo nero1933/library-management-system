@@ -1,4 +1,7 @@
 import logging
+from unittest.mock import patch
+
+import pytest
 from sqlalchemy import create_engine, event, Engine
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -7,13 +10,14 @@ from core import settings
 
 
 logging.basicConfig(
-    format="SQL --->  %(message)s",
-    level=logging.INFO
-)
+    format="%(message)s",
+    level=logging.INFO)
+
 
 @event.listens_for(Engine, "before_cursor_execute")
 def log_sql_query(conn, cursor, statement, parameters, context, executemany):
-    logging.info(f"{statement}")
+    if not settings.DISABLE_SQL_LOGGING:
+        logging.info(f"SQL --->  {statement}")
 
 
 engine = create_engine(settings.DATABASE_URL)
@@ -27,6 +31,3 @@ def get_db():
         yield db
     finally:
         db.close()
-
-
-# db_dependency = Annotated[Session, Depends(get_db)]
