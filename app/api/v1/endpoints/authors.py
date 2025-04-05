@@ -21,12 +21,19 @@ def create_author(author: schemas.AuthorSchema, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Author with this name already exists"
         )
-
-    db_author = models.Author(name=author.name, birthdate=author.birthdate)
-    db.add(db_author)
-    db.commit()
-    db.refresh(db_author)
-    return db_author
+    try:
+        db_author = models.Author(name=author.name, birthdate=author.birthdate)
+        db.add(db_author)
+        db.commit()
+        db.refresh(db_author)
+        return db_author
+    except Exception as e:
+        db.rollback()
+        print(e)
+        return HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Error happened"
+        )
 
 
 @router.get('',
