@@ -97,7 +97,7 @@ def borrow_book(data: BorrowMultipleCreateSchema,
 @router.post("/return",
              response_model=list[BorrowResponseSchema],
              status_code=status.HTTP_201_CREATED)
-def borrow_book(data: BorrowMultipleCreateSchema,
+def return_book(data: BorrowMultipleCreateSchema,
                 db: Session = Depends(get_db),
                 current_user: User = Depends(get_user_from_token)):
 
