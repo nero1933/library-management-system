@@ -76,6 +76,7 @@ POST /books
 * Checks that ids of author, genre and publisher exists.
 * Checks ISBN for correct format.
 * Checks publish date for being in the past.
+* Checks that qty is positive integer.
 * Has filters by 'author', 'genre', 'publisher' (by theirs name, not id!), 'title'.
 * Has Pagination (limit & offset).
 

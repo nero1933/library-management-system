@@ -5,7 +5,8 @@ from sqlalchemy.orm import Session
 
 from db import get_db
 from api.v1.schemas import TokenDataSchema, UserResponseSchema, UserCreateSchema, UserAuthSchema
-from api.v1.services import create_user, verify_password, create_auth_token, get_user_by_email, get_user_from_token
+from api.v1.services import create_user, verify_password, create_auth_token, get_user_by_email, get_user_from_token, \
+    decode_auth_token
 from core.config import settings
 
 router = APIRouter(prefix='/auth', tags=['auth'])
@@ -71,8 +72,8 @@ def refresh_token(request: Request, db: Session = Depends(get_db)):
                 detail="Refresh token not found in cookies"
             )
         # Creates new access token and returns it
-        user = get_user_from_token(token=refresh_token, db=db)
-        access_token = create_auth_token(user.id, int(settings.ACCESS_TOKEN_EXPIRE_MINUTES))
+        user = decode_auth_token(refresh_token)
+        access_token = create_auth_token(user['sub'], int(settings.ACCESS_TOKEN_EXPIRE_MINUTES))
         return {'access_token': access_token}
 
     except jwt.PyJWTError:

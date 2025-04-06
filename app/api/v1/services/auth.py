@@ -84,3 +84,24 @@ def get_user_from_token(
 
     except jwt.PyJWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
+
+
+def decode_auth_token(token: str) -> dict:
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM]
+        )
+
+        exp = payload.get("exp")
+        if exp and datetime.utcnow().timestamp() > exp:
+            raise jwt.PyJWTError("Token has expired")
+
+        return payload
+
+    except jwt.PyJWTError as e:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=f"Token is invalid: {str(e)}"
+        )
