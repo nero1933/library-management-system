@@ -11,6 +11,11 @@
 
 ***
 
+## Features:
+In progress...
+
+***
+
 ## API Documentation
 [View API Docs](https://nero1933.github.io/library-management-system/)
 
@@ -64,33 +69,43 @@ GET /books
 * Returns a list of books with related models.
 
 POST /books
-* Cannot be two books with same title and same authors.
+* Creates a book record.
+* Cannot be two books with same title and author.
 * Checks that ids of author, genre and publisher exists.
 * Checks ISBN for correct format.
 * Checks publish date for being in the past.
+* Has filters by 'author', 'genre', 'publisher' (by theirs name, not id!), 'title'.
+* Has Pagination (limit & offset).
 
 GET /books/{book_id}
 * Returns a certain book with related models.
 
 GET /book/{book_id}/history
-* Returns a transaction history for certain book
+* Returns a list of transactions for a certain book.
 
 ##
 
 ### users
-GET /users/me
-*
+GET /users/me (authentication required)
+* Returns user details.
 
-POST /users/history
-*
+GET /users/history (authentication required)
+* Returns list of users transaction.
+* Has filter 'active'. If 'True' returns only active borrows. If 'False' returns only completed ones.
+* Has Pagination (limit & offset).
 
 ##
 
 ### book_transactions
-GET /borrow
-*
+GET /borrow (authentication required)
+* Takes as a value a list od 'book_ids'
+* Checks each requested 'book.id' for existing.
+* Checks each requested 'book.qty_in_library' to be more than one.
+* Checks that the user does not exceed their borrowing limit (By default user can have no more than 3 active borrows. See 'MAX_BORROWS' in .env).
+* Checks that the user cannot borrow same book twice if he didn't return first one.
+* After user has successfully borrowed a book, qty of this book decreases by one. 
 
-POST /return
+POST /return (authentication required)
 *
 
 ***
