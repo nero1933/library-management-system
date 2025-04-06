@@ -1,4 +1,4 @@
 .idea
 .env
 data
-alembic/versions
+app/alembic/versions/*
