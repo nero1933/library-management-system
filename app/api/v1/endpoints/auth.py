@@ -61,6 +61,12 @@ def login(response: Response, user_data: UserAuthSchema, db: Session = Depends(g
     return {'access_token': access_token}
 
 
+@router.post('/logout', response_model=dict)
+def logout(response: Response):
+    response.delete_cookie('refresh_token')
+    return {"message": "Successfully logged out"}
+
+
 @router.post("/refresh", response_model=TokenDataSchema)
 def refresh_token(request: Request, db: Session = Depends(get_db)):
     try:
