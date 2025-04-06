@@ -36,7 +36,9 @@ GET /authors/{author_id}/books
 
 ### auth
 POST /auth/register
-*
+* Creates a user.
+* Checks that email is unique.
+* Checks that username is unique.
 
 POST /auth/login
 *
@@ -98,7 +100,7 @@ GET /users/history (authentication required)
 
 ### book_transactions
 GET /borrow (authentication required)
-* Takes as a value a list od 'book_ids'
+* Takes as a value a list od 'book_ids'.
 * Checks each requested 'book.id' for existing.
 * Checks each requested 'book.qty_in_library' to be more than one.
 * Checks that the user does not exceed their borrowing limit (By default user can have no more than 3 active borrows. See 'MAX_BORROWS' in .env).
@@ -106,7 +108,10 @@ GET /borrow (authentication required)
 * After user has successfully borrowed a book, qty of this book decreases by one. 
 
 POST /return (authentication required)
-*
+* Takes as a value a list od 'book_ids'.
+* Checks each requested 'book.id' for existing.
+* Checks that each requested 'book.id' exists in active borrows.
+* After user has successfully returned a book, qty of this book increases by one. 
 
 ***
 

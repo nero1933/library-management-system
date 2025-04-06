@@ -1,6 +1,6 @@
 import jwt
 from fastapi import HTTPException, Depends, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
@@ -9,7 +9,8 @@ from core.config import settings
 from db import get_db
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')
+# oauth2_scheme = OAuth2PasswordBearer(tokenUrl='auth/login')
+security = HTTPBearer()
 
 
 def get_user_by_email(db: Session, email: str) -> User | None:
@@ -54,10 +55,12 @@ def create_auth_token(user_id: int, token_lifetime: int):
 
 
 def get_user_from_token(
-        token: str = Depends(oauth2_scheme),
+        # token: str = Depends(oauth2_scheme),
+        credentials: HTTPAuthorizationCredentials = Depends(security),
         db: Session = Depends(get_db),
 ):
     try:
+        token = credentials.credentials
         # Decode the token and verify it
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id = payload.get("sub")  # "sub" is used for the user ID
