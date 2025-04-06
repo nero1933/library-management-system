@@ -53,6 +53,9 @@ POST /auth/register
 POST /auth/login
 * Returns 'access_token' and sets 'refresh_token' to cookie with httponly=Ture.
 
+POST /auth/logout
+* Deletes 'refresh_token' from cookie.
+
 POST /auth/refresh_token
 * Retrieves 'refresh_token' from cookie, creates new 'access_token' an returns it.
 
@@ -91,7 +94,7 @@ POST /books
 * Creates a book record.
 * Cannot be two books with same title and author.
 * Checks that ids of author, genre and publisher exists.
-* Checks ISBN for correct format.
+* Checks ISBN for correct format & uniqueness.
 * Checks 'publish_date' for being in the past.
 * Checks that 'qty_in_library' is positive integer.
 * Has filters by 'author', 'genre', 'publisher' (by theirs name, not id!), 'title'.
