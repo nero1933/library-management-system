@@ -7,7 +7,8 @@
 3) Open the terminal in project directory and run following commands.
 4) docker compose build
 5) docker compose run app sh -c "alembic revision --autogenerate -m "init""
-6) docker compose run app sh -c "alembic upgrade head" 
+6) docker compose run app sh -c "alembic upgrade head"
+7) docker compose up
 7) Now you are ready to go!
 
 ***

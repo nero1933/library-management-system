@@ -2,3 +2,4 @@
 .env
 data
 app/alembic/versions/*
+!app/alembic/versions/.gitkeep
