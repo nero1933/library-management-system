@@ -136,8 +136,8 @@ def test_book_transactions_auth(client):
 
     # Borrow it
     response = client.post(f'/borrow', json={'book_ids': [1]})
-    assert response.status_code == 401
+    assert response.status_code == 403
 
     # Return it
     response = client.post(f'/return', json={'book_ids': [1]})
-    assert response.status_code == 401
+    assert response.status_code == 403
