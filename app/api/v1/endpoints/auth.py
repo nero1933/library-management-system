@@ -36,7 +36,7 @@ def register(user_data: UserCreateSchema, db: Session = Depends(get_db)):
             elif 'username' in str(e.orig):
                 raise HTTPException(
                     status_code=400,
-                    detail=f"Book with username {user_data.username} already taken"
+                    detail=f"User with username {user_data.username} already taken"
                 )
 
 
