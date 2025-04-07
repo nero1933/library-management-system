@@ -4,7 +4,7 @@ from typing import List
 from fastapi import APIRouter, HTTPException, status, Depends, Query
 from sqlalchemy import desc
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy.sql.functions import current_user
 
 from api.v1.models import Book, Author, Genre, Publisher, User, BookTransaction
@@ -93,7 +93,15 @@ def create_book(book: BookCreateSchema, db: Session = Depends(get_db)):
         db.add(db_book)
         db.commit()
         db.refresh(db_book)
-        return db_book
+
+        query = db.query(Book).options(
+            joinedload(Book.author),
+            joinedload(Book.genre),
+            joinedload(Book.publisher)
+        ).filter(Book.id == db_book.id).first()
+
+        return query
+
     except IntegrityError as e:
         db.rollback()
 

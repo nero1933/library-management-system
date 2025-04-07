@@ -1,6 +1,6 @@
 from datetime import date
 
-from pydantic import BaseModel, validator, field_validator
+from pydantic import BaseModel, validator, field_validator, ConfigDict
 
 
 class PublisherSchema(BaseModel):
@@ -20,3 +20,5 @@ class PublisherResponseSchema(BaseModel):
     id: int
     name: str
     established_year: int
+
+    model_config = ConfigDict(from_attributes=True)
